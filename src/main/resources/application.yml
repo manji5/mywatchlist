@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mywatchlist
+    username: postgres
+    password: 12345
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+application:
+  tmdb:
+    api-key: ${TMDB_API_KEY}
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET}
+      expiration: 86400000
