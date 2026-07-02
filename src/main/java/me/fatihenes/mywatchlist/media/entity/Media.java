@@ -1,8 +1,13 @@
 package me.fatihenes.mywatchlist.media.entity;
 
+import java.time.LocalDateTime;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -29,6 +34,7 @@ import me.fatihenes.mywatchlist.auth.entity.User;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EntityListeners(AuditingEntityListener.class)
 public class Media {
 
     @Id
@@ -36,21 +42,16 @@ public class Media {
     private Long id;
 
     @Column(nullable = false)
-    private String externalId; // TMDB or Jikan
+    private String externalId;
 
     @Column(nullable = false)
     private String title;
 
     private String originalTitle;
-
     private String backdropUrl;
-
     private String posterUrl;
-
     private Double score;
-
     private Integer duration;
-
     private Integer episodes;
 
     @Column(nullable = false)
@@ -70,4 +71,11 @@ public class Media {
     @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnore
     private User user;
+
+    @CreatedDate
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
 }

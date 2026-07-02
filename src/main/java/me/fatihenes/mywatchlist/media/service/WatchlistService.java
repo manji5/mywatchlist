@@ -1,5 +1,6 @@
 package me.fatihenes.mywatchlist.media.service;
 
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +15,7 @@ import me.fatihenes.mywatchlist.exception.ResourceNotFoundException;
 import me.fatihenes.mywatchlist.exception.UnauthorizedAccessException;
 import me.fatihenes.mywatchlist.media.client.JikanClient;
 import me.fatihenes.mywatchlist.media.client.TmdbClient;
+import me.fatihenes.mywatchlist.media.dto.ContinueWatchingDTO;
 import me.fatihenes.mywatchlist.media.dto.JikanAnimeDTO;
 import me.fatihenes.mywatchlist.media.dto.MediaResponseDTO;
 import me.fatihenes.mywatchlist.media.dto.TmdbDTO;
@@ -176,7 +178,6 @@ public class WatchlistService {
 
         media.setWatchedEpisodes(updated);
 
-        // Automatic status update
         if (totalEpisodes > 0 && updated == totalEpisodes) {
             media.setStatus(WatchStatus.COMPLETED);
         } else if (updated > 0 && media.getStatus() == WatchStatus.PLAN_TO_WATCH) {
@@ -220,7 +221,6 @@ public class WatchlistService {
 
         media.setWatchedEpisodes(updated);
 
-        // Automatic status update
         if (totalEpisodes > 0 && updated == totalEpisodes) {
             media.setStatus(WatchStatus.COMPLETED);
         } else if (updated > 0 && media.getStatus() == WatchStatus.PLAN_TO_WATCH) {
@@ -264,7 +264,6 @@ public class WatchlistService {
 
         media.setWatchedEpisodes(updated);
 
-        // Automatic status update
         if (totalEpisodes > 0 && updated == totalEpisodes) {
             media.setStatus(WatchStatus.COMPLETED);
         } else if (updated > 0 && media.getStatus() == WatchStatus.PLAN_TO_WATCH) {
@@ -308,7 +307,6 @@ public class WatchlistService {
 
         media.setWatchedEpisodes(updated);
 
-        // Automatic status update
         if (totalEpisodes > 0 && updated == totalEpisodes) {
             media.setStatus(WatchStatus.COMPLETED);
         } else if (updated > 0 && media.getStatus() == WatchStatus.PLAN_TO_WATCH) {
@@ -337,8 +335,6 @@ public class WatchlistService {
         media.setStatus(status);
         mediaRepository.save(media);
     }
-
-    // TmdbDTO showId = tmdbClient.fetchSeriesDetails(showId);
 
     public void updateMovieStatus(Long movieId, WatchStatus status, String username) {
         Media media = getMediaByExternalIdAndVerifyOwner(String.valueOf(movieId), MediaType.MOVIE,
@@ -428,5 +424,25 @@ public class WatchlistService {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
 
         return mediaRepository.findAllByUserUsername(username, pageable).map(this::toDto);
+    }
+
+    private ContinueWatchingDTO toContinueDto(Media media) {
+        int total = media.getEpisodes() != null ? media.getEpisodes() : 0;
+        int watched = media.getWatchedEpisodes() != null ? media.getWatchedEpisodes() : 0;
+        double progress = total > 0 ? (double) watched / total : 0.0;
+
+        return new ContinueWatchingDTO(media.getId(), media.getExternalId(), media.getType(),
+                media.getTitle(), media.getBackdropUrl(), media.getPosterUrl(), media.getScore(),
+                watched, total, progress);
+    }
+
+    public List<ContinueWatchingDTO> getContinueWatching(String username) {
+        return mediaRepository.findTop10ByUserUsernameAndStatusOrderByUpdatedAtDesc(username,
+                WatchStatus.WATCHING).stream().map(this::toContinueDto).toList();
+    }
+
+    public List<ContinueWatchingDTO> getRecentlyAdded(String username) {
+        return mediaRepository.findTop10ByUserUsernameOrderByCreatedAtDesc(username).stream()
+                .map(this::toContinueDto).toList();
     }
 }

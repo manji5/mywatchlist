@@ -1,5 +1,6 @@
 package me.fatihenes.mywatchlist.media.controller;
 
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import me.fatihenes.mywatchlist.media.dto.ContinueWatchingDTO;
 import me.fatihenes.mywatchlist.media.dto.HomeResponseDTO;
 import me.fatihenes.mywatchlist.media.dto.JikanAnimeDetailDTO;
 import me.fatihenes.mywatchlist.media.dto.JikanSearchResponseDTO;
@@ -245,29 +247,16 @@ public class MediaController {
         return ResponseEntity.ok(jikanApiService.trendingAnime());
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<SearchResponseDTO> search(@RequestParam String query) {
+    @GetMapping("/continue")
+    public ResponseEntity<List<ContinueWatchingDTO>> getContinueWatching() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(watchlistService.getContinueWatching(username));
+    }
 
-        TmdbSearchResponseDTO movies = null;
-        TmdbSearchResponseDTO series = null;
-        JikanSearchResponseDTO anime = null;
-
-        try {
-            movies = tmdbApiService.searchMovie(query);
-        } catch (Exception ignored) {
-        }
-
-        try {
-            series = tmdbApiService.searchSeries(query);
-        } catch (Exception ignored) {
-        }
-
-        try {
-            anime = jikanApiService.searchAnime(query);
-        } catch (Exception ignored) {
-        }
-
-        return ResponseEntity.ok(new SearchResponseDTO(movies, series, anime));
+    @GetMapping("/recent")
+    public ResponseEntity<List<ContinueWatchingDTO>> getRecentlyAdded() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(watchlistService.getRecentlyAdded(username));
     }
 
 }
