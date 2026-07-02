@@ -14,14 +14,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import me.fatihenes.mywatchlist.media.dto.HomeResponseDTO;
+import me.fatihenes.mywatchlist.media.dto.JikanAnimeDetailDTO;
 import me.fatihenes.mywatchlist.media.dto.JikanSearchResponseDTO;
 import me.fatihenes.mywatchlist.media.dto.MediaResponseDTO;
 import me.fatihenes.mywatchlist.media.dto.TmdbSearchResponseDTO;
 import me.fatihenes.mywatchlist.media.dto.UpdateProgressRequestDTO;
+import me.fatihenes.mywatchlist.media.dto.WatchlistStatusDTO;
+import me.fatihenes.mywatchlist.media.entity.MediaType;
 import me.fatihenes.mywatchlist.media.entity.WatchStatus;
 import me.fatihenes.mywatchlist.media.service.JikanApiService;
 import me.fatihenes.mywatchlist.media.service.TmdbApiService;
 import me.fatihenes.mywatchlist.media.service.WatchlistService;
+import me.fatihenes.mywatchlist.media.dto.SearchResponseDTO;
+import me.fatihenes.mywatchlist.media.dto.TmdbDetailDTO;
 
 @RestController
 @RequestMapping("/api/media")
@@ -47,6 +53,21 @@ public class MediaController {
     @GetMapping("/series")
     public ResponseEntity<TmdbSearchResponseDTO> searchSeries(@RequestParam String query) {
         return ResponseEntity.ok(tmdbApiService.searchSeries(query));
+    }
+
+    @GetMapping("/movie/{id}")
+    public ResponseEntity<TmdbDetailDTO> getMovie(@PathVariable Long id) {
+        return ResponseEntity.ok(tmdbApiService.getMovie(id));
+    }
+
+    @GetMapping("/series/{id}")
+    public ResponseEntity<TmdbDetailDTO> getSeries(@PathVariable Long id) {
+        return ResponseEntity.ok(tmdbApiService.getSeries(id));
+    }
+
+    @GetMapping("/anime/{id}")
+    public ResponseEntity<JikanAnimeDetailDTO> getAnime(@PathVariable Long id) {
+        return ResponseEntity.ok(jikanApiService.getAnime(id));
     }
 
     // POST http://localhost:8080/api/media/save/anime/{movieId}
@@ -85,6 +106,27 @@ public class MediaController {
         return ResponseEntity.ok(watchlistService.getWatchlistByUsername(username, page, size));
     }
 
+    @GetMapping("/movie/{id}/watchlist")
+    public ResponseEntity<WatchlistStatusDTO> getMovieWatchlistStatus(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity
+                .ok(watchlistService.getWatchlistStatus(id, MediaType.MOVIE, username));
+    }
+
+    @GetMapping("/series/{id}/watchlist")
+    public ResponseEntity<WatchlistStatusDTO> getSeriesWatchlistStatus(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity
+                .ok(watchlistService.getWatchlistStatus(id, MediaType.TV_SERIES, username));
+    }
+
+    @GetMapping("/anime/{id}/watchlist")
+    public ResponseEntity<WatchlistStatusDTO> getAnimeWatchlistStatus(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity
+                .ok(watchlistService.getWatchlistStatus(id, MediaType.ANIME, username));
+    }
+
     // GET http://localhost:8080/api/media/watchlist/{targetUsername}
     @GetMapping("/watchlist/{targetUsername}")
     public ResponseEntity<Page<MediaResponseDTO>> getOtherWatchlist(
@@ -104,6 +146,33 @@ public class MediaController {
         return ResponseEntity.ok("Media status successfully updated to " + status.name());
     }
 
+    @PatchMapping("/movie/{id}/status")
+    public ResponseEntity<String> updateMovieStatus(@PathVariable Long id,
+            @RequestParam WatchStatus status) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        watchlistService.updateMovieStatus(id, status, username);
+
+        return ResponseEntity.ok("Media status successfully updated to " + status.name());
+    }
+
+    @PatchMapping("/series/{id}/status")
+    public ResponseEntity<String> updateSeriesStatus(@PathVariable Long id,
+            @RequestParam WatchStatus status) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        watchlistService.updateSeriesStatus(id, status, username);
+
+        return ResponseEntity.ok("Media status successfully updated to " + status.name());
+    }
+
+    @PatchMapping("/anime/{id}/status")
+    public ResponseEntity<String> updateAnimeStatus(@PathVariable Long id,
+            @RequestParam WatchStatus status) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        watchlistService.updateAnimeStatus(id, status, username);
+
+        return ResponseEntity.ok("Media status successfully updated to " + status.name());
+    }
+
     // PATCH http://localhost:8080/api/media/progress/{id}
     @PatchMapping("/progress/{id}")
     public ResponseEntity<String> updateProgress(@PathVariable Long id,
@@ -114,12 +183,91 @@ public class MediaController {
         return ResponseEntity.ok("Progress successfully updated.");
     }
 
+    @PatchMapping("/movie/{id}/progress")
+    public ResponseEntity<String> updateMovieStatus(@PathVariable Long id,
+            @Valid @RequestBody UpdateProgressRequestDTO requestDTO) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        watchlistService.updateMovieWatchedEpisodes(id, requestDTO, username);
+
+        return ResponseEntity.ok("Movie progress successfully updated.");
+    }
+
+    @PatchMapping("/series/{id}/progress")
+    public ResponseEntity<String> updateSeriesStatus(@PathVariable Long id,
+            @Valid @RequestBody UpdateProgressRequestDTO requestDTO) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        watchlistService.updateSeriesWatchedEpisodes(id, requestDTO, username);
+
+        return ResponseEntity.ok("Tv Show progress successfully updated.");
+    }
+
+    @PatchMapping("/anime/{id}/progress")
+    public ResponseEntity<String> updateAnimeStatus(@PathVariable Long id,
+            @Valid @RequestBody UpdateProgressRequestDTO requestDTO) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        watchlistService.updateAnimeWatchedEpisodes(id, requestDTO, username);
+
+        return ResponseEntity.ok("Anime progress successfully updated.");
+    }
+
     // DELETE http://localhost:8080/api/media/delete/{id}
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteMediaFromWatchlist(@PathVariable Long id) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         watchlistService.deleteMedia(id, username);
         return ResponseEntity.ok("Media successfully removed from your watchlist.");
+    }
+
+    @GetMapping("/home")
+    public ResponseEntity<HomeResponseDTO> getHomeData() {
+
+        HomeResponseDTO response = new HomeResponseDTO(tmdbApiService.trendingMovies(),
+                tmdbApiService.trendingSeries(), jikanApiService.trendingAnime());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/trending/movies")
+    public ResponseEntity<TmdbSearchResponseDTO> getTrendingMovie() {
+
+        return ResponseEntity.ok(tmdbApiService.trendingMovies());
+    }
+
+    @GetMapping("/trending/series")
+    public ResponseEntity<TmdbSearchResponseDTO> getTrendingSeries() {
+
+        return ResponseEntity.ok(tmdbApiService.trendingSeries());
+    }
+
+    @GetMapping("/trending/anime")
+    public ResponseEntity<JikanSearchResponseDTO> getTrendingAnime() {
+
+        return ResponseEntity.ok(jikanApiService.trendingAnime());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<SearchResponseDTO> search(@RequestParam String query) {
+
+        TmdbSearchResponseDTO movies = null;
+        TmdbSearchResponseDTO series = null;
+        JikanSearchResponseDTO anime = null;
+
+        try {
+            movies = tmdbApiService.searchMovie(query);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            series = tmdbApiService.searchSeries(query);
+        } catch (Exception ignored) {
+        }
+
+        try {
+            anime = jikanApiService.searchAnime(query);
+        } catch (Exception ignored) {
+        }
+
+        return ResponseEntity.ok(new SearchResponseDTO(movies, series, anime));
     }
 
 }

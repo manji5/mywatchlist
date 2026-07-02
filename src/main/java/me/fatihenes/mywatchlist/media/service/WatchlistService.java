@@ -18,6 +18,7 @@ import me.fatihenes.mywatchlist.media.dto.JikanAnimeDTO;
 import me.fatihenes.mywatchlist.media.dto.MediaResponseDTO;
 import me.fatihenes.mywatchlist.media.dto.TmdbDTO;
 import me.fatihenes.mywatchlist.media.dto.UpdateProgressRequestDTO;
+import me.fatihenes.mywatchlist.media.dto.WatchlistStatusDTO;
 import me.fatihenes.mywatchlist.media.entity.Media;
 import me.fatihenes.mywatchlist.media.entity.MediaType;
 import me.fatihenes.mywatchlist.media.entity.WatchStatus;
@@ -45,6 +46,14 @@ public class WatchlistService {
                     "Unauthorized: You cannot modify someone else's list.");
         }
 
+        return media;
+    }
+
+    private Media getMediaByExternalIdAndVerifyOwner(String externalId, MediaType type,
+            String username) {
+        Media media = mediaRepository
+                .findByExternalIdAndTypeAndUserUsername(externalId, type, username).orElseThrow(
+                        () -> new ResourceNotFoundException("Media not found in your watchlist."));
         return media;
     }
 
@@ -135,9 +144,142 @@ public class WatchlistService {
     }
 
     // Updates the number of watched episodes (increase / decrease / direct set).
+
     public void updateWatchedEpisodes(Long mediaId, UpdateProgressRequestDTO request,
             String username) {
         Media media = getMediaAndVerifyOwner(mediaId, username);
+
+        int totalEpisodes = media.getEpisodes() != null ? media.getEpisodes() : 0;
+        int current = media.getWatchedEpisodes() != null ? media.getWatchedEpisodes() : 0;
+        int updated;
+
+        switch (request.action()) {
+            case INCREMENT -> updated = current + 1;
+            case DECREMENT -> updated = current - 1;
+            case SET -> {
+                if (request.value() == null) {
+                    throw new BadRequestException("value field is required for SET action.");
+                }
+                updated = request.value();
+            }
+
+            default -> throw new BadRequestException("Unknown action: " + request.action());
+        }
+
+        if (updated < 0) {
+            throw new BadRequestException("Watched episodes cannot be negative.");
+        }
+        if (totalEpisodes > 0 && updated > totalEpisodes) {
+            throw new BadRequestException(
+                    "Watched episodes cannot exceed total episodes (" + totalEpisodes + ").");
+        }
+
+        media.setWatchedEpisodes(updated);
+
+        // Automatic status update
+        if (totalEpisodes > 0 && updated == totalEpisodes) {
+            media.setStatus(WatchStatus.COMPLETED);
+        } else if (updated > 0 && media.getStatus() == WatchStatus.PLAN_TO_WATCH) {
+            media.setStatus(WatchStatus.WATCHING);
+        } else if (updated == 0 && media.getStatus() == WatchStatus.WATCHING) {
+            media.setStatus(WatchStatus.PLAN_TO_WATCH);
+        }
+
+        mediaRepository.save(media);
+    }
+
+    public void updateMovieWatchedEpisodes(Long movieId, UpdateProgressRequestDTO request,
+            String username) {
+        Media media = getMediaByExternalIdAndVerifyOwner(String.valueOf(movieId), MediaType.MOVIE,
+                username);
+
+        int totalEpisodes = media.getEpisodes() != null ? media.getEpisodes() : 0;
+        int current = media.getWatchedEpisodes() != null ? media.getWatchedEpisodes() : 0;
+        int updated;
+
+        switch (request.action()) {
+            case INCREMENT -> updated = current + 1;
+            case DECREMENT -> updated = current - 1;
+            case SET -> {
+                if (request.value() == null) {
+                    throw new BadRequestException("value field is required for SET action.");
+                }
+                updated = request.value();
+            }
+
+            default -> throw new BadRequestException("Unknown action: " + request.action());
+        }
+
+        if (updated < 0) {
+            throw new BadRequestException("Watched episodes cannot be negative.");
+        }
+        if (totalEpisodes > 0 && updated > totalEpisodes) {
+            throw new BadRequestException(
+                    "Watched episodes cannot exceed total episodes (" + totalEpisodes + ").");
+        }
+
+        media.setWatchedEpisodes(updated);
+
+        // Automatic status update
+        if (totalEpisodes > 0 && updated == totalEpisodes) {
+            media.setStatus(WatchStatus.COMPLETED);
+        } else if (updated > 0 && media.getStatus() == WatchStatus.PLAN_TO_WATCH) {
+            media.setStatus(WatchStatus.WATCHING);
+        } else if (updated == 0 && media.getStatus() == WatchStatus.WATCHING) {
+            media.setStatus(WatchStatus.PLAN_TO_WATCH);
+        }
+
+        mediaRepository.save(media);
+    }
+
+    public void updateSeriesWatchedEpisodes(Long seriesId, UpdateProgressRequestDTO request,
+            String username) {
+        Media media = getMediaByExternalIdAndVerifyOwner(String.valueOf(seriesId),
+                MediaType.TV_SERIES, username);
+
+        int totalEpisodes = media.getEpisodes() != null ? media.getEpisodes() : 0;
+        int current = media.getWatchedEpisodes() != null ? media.getWatchedEpisodes() : 0;
+        int updated;
+
+        switch (request.action()) {
+            case INCREMENT -> updated = current + 1;
+            case DECREMENT -> updated = current - 1;
+            case SET -> {
+                if (request.value() == null) {
+                    throw new BadRequestException("value field is required for SET action.");
+                }
+                updated = request.value();
+            }
+
+            default -> throw new BadRequestException("Unknown action: " + request.action());
+        }
+
+        if (updated < 0) {
+            throw new BadRequestException("Watched episodes cannot be negative.");
+        }
+        if (totalEpisodes > 0 && updated > totalEpisodes) {
+            throw new BadRequestException(
+                    "Watched episodes cannot exceed total episodes (" + totalEpisodes + ").");
+        }
+
+        media.setWatchedEpisodes(updated);
+
+        // Automatic status update
+        if (totalEpisodes > 0 && updated == totalEpisodes) {
+            media.setStatus(WatchStatus.COMPLETED);
+        } else if (updated > 0 && media.getStatus() == WatchStatus.PLAN_TO_WATCH) {
+            media.setStatus(WatchStatus.WATCHING);
+        } else if (updated == 0 && media.getStatus() == WatchStatus.WATCHING) {
+            media.setStatus(WatchStatus.PLAN_TO_WATCH);
+        }
+
+        mediaRepository.save(media);
+    }
+
+    public void updateAnimeWatchedEpisodes(Long malId, UpdateProgressRequestDTO request,
+            String username) {
+        Media media = getMediaByExternalIdAndVerifyOwner(String.valueOf(malId), MediaType.ANIME,
+                username);
 
         int totalEpisodes = media.getEpisodes() != null ? media.getEpisodes() : 0;
         int current = media.getWatchedEpisodes() != null ? media.getWatchedEpisodes() : 0;
@@ -196,9 +338,72 @@ public class WatchlistService {
         mediaRepository.save(media);
     }
 
+    // TmdbDTO showId = tmdbClient.fetchSeriesDetails(showId);
+
+    public void updateMovieStatus(Long movieId, WatchStatus status, String username) {
+        Media media = getMediaByExternalIdAndVerifyOwner(String.valueOf(movieId), MediaType.MOVIE,
+                username);
+
+        if (status == WatchStatus.COMPLETED && media.getEpisodes() == 0) {
+            throw new BadRequestException(
+                    "You cannot mark a series as COMPLETED if no episodes are defined.");
+        }
+
+        if (status == WatchStatus.COMPLETED) {
+            media.setWatchedEpisodes(media.getEpisodes());
+        }
+
+        media.setStatus(status);
+        mediaRepository.save(media);
+    }
+
+
+    public void updateSeriesStatus(Long showId, WatchStatus status, String username) {
+        Media media = getMediaByExternalIdAndVerifyOwner(String.valueOf(showId),
+                MediaType.TV_SERIES, username);
+
+        if (status == WatchStatus.COMPLETED && media.getEpisodes() == 0) {
+            throw new BadRequestException(
+                    "You cannot mark a series as COMPLETED if no episodes are defined.");
+        }
+
+        if (status == WatchStatus.COMPLETED) {
+            media.setWatchedEpisodes(media.getEpisodes());
+        }
+
+        media.setStatus(status);
+        mediaRepository.save(media);
+    }
+
+    public void updateAnimeStatus(Long animeId, WatchStatus status, String username) {
+        Media media = getMediaByExternalIdAndVerifyOwner(String.valueOf(animeId), MediaType.ANIME,
+                username);
+
+        if (status == WatchStatus.COMPLETED && media.getEpisodes() == 0) {
+            throw new BadRequestException(
+                    "You cannot mark a series as COMPLETED if no episodes are defined.");
+        }
+
+        if (status == WatchStatus.COMPLETED) {
+            media.setWatchedEpisodes(media.getEpisodes());
+        }
+
+        media.setStatus(status);
+        mediaRepository.save(media);
+    }
+
+
     public void deleteMedia(Long mediaId, String username) {
         Media media = getMediaAndVerifyOwner(mediaId, username);
         mediaRepository.delete(media);
+    }
+
+    public WatchlistStatusDTO getWatchlistStatus(Long externalId, MediaType type, String username) {
+        return mediaRepository
+                .findByExternalIdAndTypeAndUserUsername(String.valueOf(externalId), type, username)
+                .map(media -> new WatchlistStatusDTO(true, media.getStatus(),
+                        media.getWatchedEpisodes()))
+                .orElse(WatchlistStatusDTO.notSaved());
     }
 
     // Calculates the total viewing time in minutes.
@@ -212,7 +417,8 @@ public class WatchlistService {
     // Converts the Media entity to MediaResponseDTO.
     private MediaResponseDTO toDto(Media media) {
         return new MediaResponseDTO(media.getId(), media.getExternalId(), media.getTitle(),
-                media.getPosterUrl(), media.getScore(), media.getDuration(), media.getEpisodes(),
+                media.getOriginalTitle(), media.getBackdropUrl(), media.getPosterUrl(),
+                media.getScore(), media.getDuration(), media.getEpisodes(),
                 media.getWatchedEpisodes(), calculateTotalWatchedMinutes(media), media.getType(),
                 media.getStatus());
     }

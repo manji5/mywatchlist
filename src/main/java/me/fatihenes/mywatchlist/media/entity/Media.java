@@ -41,6 +41,10 @@ public class Media {
     @Column(nullable = false)
     private String title;
 
+    private String originalTitle;
+
+    private String backdropUrl;
+
     private String posterUrl;
 
     private Double score;

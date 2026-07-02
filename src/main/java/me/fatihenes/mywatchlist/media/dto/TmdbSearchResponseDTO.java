@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 public class TmdbSearchResponseDTO {
-    private List<TmdbDTO> results;
+
+    private List<TmdbSearchDTO> results;
 
 }

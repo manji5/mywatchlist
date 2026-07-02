@@ -41,8 +41,15 @@ public class AuthService {
             throw new BadRequestException("Wrong email or password.");
         }
 
-        String jwtToken = jwtService.generateToken(user);
-        return new AuthResponse(jwtToken, "Login Successful!");
+        String jwtToken;
+
+        if (request.rememberMe()) {
+            jwtToken = jwtService.generateRememberMeToken(user);
+        } else {
+            jwtToken = jwtService.generateToken(user);
+        }
+
+        return new AuthResponse(jwtToken, user.getUsername(), user.getEmail(), "Login Successful!");
     }
 
 }
