@@ -28,7 +28,6 @@ import me.fatihenes.mywatchlist.media.entity.WatchStatus;
 import me.fatihenes.mywatchlist.media.service.JikanApiService;
 import me.fatihenes.mywatchlist.media.service.TmdbApiService;
 import me.fatihenes.mywatchlist.media.service.WatchlistService;
-import me.fatihenes.mywatchlist.media.dto.SearchResponseDTO;
 import me.fatihenes.mywatchlist.media.dto.TmdbDetailDTO;
 
 @RestController

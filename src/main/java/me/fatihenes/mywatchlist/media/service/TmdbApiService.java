@@ -3,7 +3,6 @@ package me.fatihenes.mywatchlist.media.service;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-import me.fatihenes.mywatchlist.media.dto.TmdbDTO;
 import me.fatihenes.mywatchlist.media.dto.TmdbDetailDTO;
 import me.fatihenes.mywatchlist.media.dto.TmdbSearchResponseDTO;
 
