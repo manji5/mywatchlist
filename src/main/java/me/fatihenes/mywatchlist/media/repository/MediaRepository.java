@@ -23,5 +23,10 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
 
         List<Media> findTop10ByUserUsernameOrderByCreatedAtDesc(String username);
 
+        long countByUserUsername(String username);
+
+        long countByUserUsernameAndType(String username, MediaType type);
+
+        long countByUserUsernameAndStatus(String username, WatchStatus status);
 
 }

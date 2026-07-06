@@ -1,5 +1,7 @@
 package me.fatihenes.mywatchlist.auth.dto;
 
-public record UserProfileResponse(String username, String email, String profileImageUrl) {
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+public record UserProfileResponse(String username, String email,
+        @JsonProperty("avatarUrl") String profileImageUrl, UserStatsDTO stats) {
 }

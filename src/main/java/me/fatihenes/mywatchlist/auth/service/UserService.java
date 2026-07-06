@@ -9,15 +9,20 @@ import me.fatihenes.mywatchlist.auth.dto.UpdatePasswordRequest;
 import me.fatihenes.mywatchlist.auth.dto.UpdateUsernameRequest;
 import me.fatihenes.mywatchlist.auth.dto.UpdateUsernameResponse;
 import me.fatihenes.mywatchlist.auth.dto.UserProfileResponse;
+import me.fatihenes.mywatchlist.auth.dto.UserStatsDTO;
 import me.fatihenes.mywatchlist.auth.entity.User;
 import me.fatihenes.mywatchlist.auth.repository.UserRepository;
 import me.fatihenes.mywatchlist.exception.ResourceConflictException;
 import me.fatihenes.mywatchlist.exception.ResourceNotFoundException;
+import me.fatihenes.mywatchlist.media.entity.MediaType;
+import me.fatihenes.mywatchlist.media.entity.WatchStatus;
+import me.fatihenes.mywatchlist.media.repository.MediaRepository;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final MediaRepository mediaRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
@@ -32,10 +37,28 @@ public class UserService {
         }
     }
 
+    private UserStatsDTO buildStats(String username) {
+        long total = mediaRepository.countByUserUsername(username);
+        long movies = mediaRepository.countByUserUsernameAndType(username, MediaType.MOVIE);
+        long series = mediaRepository.countByUserUsernameAndType(username, MediaType.TV_SERIES);
+        long anime = mediaRepository.countByUserUsernameAndType(username, MediaType.ANIME);
+        long completed =
+                mediaRepository.countByUserUsernameAndStatus(username, WatchStatus.COMPLETED);
+        long watching =
+                mediaRepository.countByUserUsernameAndStatus(username, WatchStatus.WATCHING);
+        long planned =
+                mediaRepository.countByUserUsernameAndStatus(username, WatchStatus.PLAN_TO_WATCH);
+        long onHold = mediaRepository.countByUserUsernameAndStatus(username, WatchStatus.ON_HOLD);
+        long dropped = mediaRepository.countByUserUsernameAndStatus(username, WatchStatus.DROPPED);
+
+        return new UserStatsDTO(total, movies, series, anime, completed, watching, planned, onHold,
+                dropped);
+    }
+
     public UserProfileResponse getProfile(String username) {
         User user = getUser(username);
         return new UserProfileResponse(user.getUsername(), user.getEmail(),
-                user.getProfileImageUrl());
+                user.getProfileImageUrl(), buildStats(username));
     }
 
     public void updateEmail(String username, UpdateEmailRequest request)
@@ -78,5 +101,4 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
     }
-
 }
