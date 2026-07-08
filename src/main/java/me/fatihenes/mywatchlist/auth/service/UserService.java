@@ -4,6 +4,7 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
+import me.fatihenes.mywatchlist.auth.dto.PublicUserProfileResponse;
 import me.fatihenes.mywatchlist.auth.dto.UpdateEmailRequest;
 import me.fatihenes.mywatchlist.auth.dto.UpdatePasswordRequest;
 import me.fatihenes.mywatchlist.auth.dto.UpdateUsernameRequest;
@@ -17,12 +18,14 @@ import me.fatihenes.mywatchlist.exception.ResourceNotFoundException;
 import me.fatihenes.mywatchlist.media.entity.MediaType;
 import me.fatihenes.mywatchlist.media.entity.WatchStatus;
 import me.fatihenes.mywatchlist.media.repository.MediaRepository;
+import me.fatihenes.mywatchlist.media.service.WatchlistService;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final MediaRepository mediaRepository;
+    private final WatchlistService watchlistService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
@@ -59,6 +62,12 @@ public class UserService {
         User user = getUser(username);
         return new UserProfileResponse(user.getUsername(), user.getEmail(),
                 user.getProfileImageUrl(), buildStats(username));
+    }
+
+    public PublicUserProfileResponse getPublicProfile(String username) {
+        User user = getUser(username);
+        return new PublicUserProfileResponse(user.getUsername(), user.getProfileImageUrl(),
+                buildStats(username));
     }
 
     public void updateEmail(String username, UpdateEmailRequest request)

@@ -28,5 +28,4 @@ public interface MediaRepository extends JpaRepository<Media, Long> {
         long countByUserUsernameAndType(String username, MediaType type);
 
         long countByUserUsernameAndStatus(String username, WatchStatus status);
-
 }
