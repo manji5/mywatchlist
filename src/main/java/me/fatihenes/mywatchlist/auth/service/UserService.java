@@ -18,14 +18,12 @@ import me.fatihenes.mywatchlist.exception.ResourceNotFoundException;
 import me.fatihenes.mywatchlist.media.entity.MediaType;
 import me.fatihenes.mywatchlist.media.entity.WatchStatus;
 import me.fatihenes.mywatchlist.media.repository.MediaRepository;
-import me.fatihenes.mywatchlist.media.service.WatchlistService;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
     private final MediaRepository mediaRepository;
-    private final WatchlistService watchlistService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
